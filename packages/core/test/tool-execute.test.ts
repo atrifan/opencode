@@ -25,7 +25,7 @@ const context = {
 
 const allowAll = permissionService({ assert: () => Effect.void })
 
-const createCodeMode = (tools: ReadonlyMap<string, Info.Form>, permission = allowAll) =>
+const createCodeMode = (tools: ReadonlyMap<string, Info>, permission = allowAll) =>
   CodeModeTool.create({ tools }, (_, tool, input, context) => execute(tool, input, context), permission)
 
 test("execute takes raw code as freeform text, and Code Mode calls freeform tools with a string", async () => {
@@ -36,8 +36,8 @@ test("execute takes raw code as freeform text, and Code Mode calls freeform tool
     input,
     output: Schema.String,
     execute: ({ text }) => Effect.succeed({ output: text }),
-  } satisfies Info.Form<typeof input, typeof Schema.String>
-  const tools = new Map<string, Info.Form>([
+  } satisfies Info<typeof input, typeof Schema.String>
+  const tools = new Map<string, Info>([
     ["echo", { ...send, name: "echo" }],
     ["send", { ...send, freeform: { type: "text" } }],
   ])
@@ -449,7 +449,7 @@ describe("fetch permissions", () => {
 })
 
 test("execute supports callable namespace tools", async () => {
-  const callable: Info.Form = {
+  const callable: Info = {
     name: "admin",
     description: "Administer Slack",
     input: Schema.Struct({}),
@@ -457,7 +457,7 @@ test("execute supports callable namespace tools", async () => {
     options: { namespace: "slack" },
     execute: () => Effect.succeed({ output: "admin" }),
   }
-  const child: Info.Form = {
+  const child: Info = {
     name: "create",
     description: "Create a Slack resource",
     input: Schema.Struct({}),
@@ -493,10 +493,10 @@ test("each call in a program gets its own ID and is marked as nested in execute"
     description: "Record the call",
     input,
     execute: (_, context) => Effect.sync(() => ids.push(context.id)).pipe(Effect.as({ content: "ok" })),
-  } satisfies Info.Form<typeof input>
+  } satisfies Info<typeof input>
   await Effect.runPromise(
     createCodeMode(
-      new Map<string, Info.Form>([["record", record]]),
+      new Map<string, Info>([["record", record]]),
       permissionService({
         nested: (call, parent) => Effect.sync(() => void nested.push([call, parent])),
       }),
@@ -509,7 +509,7 @@ test("each call in a program gets its own ID and is marked as nested in execute"
 
 test("executions share the prepared runtime of an inventory while keeping per-call state", async () => {
   let conversions = 0
-  const echo: Info.Form = {
+  const echo: Info = {
     name: "echo",
     description: "Echo a value",
     input: {
@@ -564,7 +564,7 @@ test("executions share the prepared runtime of an inventory while keeping per-ca
 
 const progressCodeMode = (started: Deferred.Deferred<void>, wait: Effect.Effect<void>) =>
   createCodeMode(
-    new Map<string, Info.Form>([
+    new Map<string, Info>([
       [
         "step",
         {

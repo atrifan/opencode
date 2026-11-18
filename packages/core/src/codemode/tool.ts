@@ -65,13 +65,13 @@ type Tools = {
 class Run extends Context.Service<
   Run,
   {
-    readonly executeTool: (name: string, tool: Info.Form, input: unknown) => Effect.Effect<unknown, unknown>
+    readonly executeTool: (name: string, tool: Info, input: unknown) => Effect.Effect<unknown, unknown>
     readonly hooks: CodeMode.Hooks
   }
 >()("@opencode/CodeModeTool/Run") {}
 
 export type Inventory = {
-  readonly tools: ReadonlyMap<string, Info.Form>
+  readonly tools: ReadonlyMap<string, Info>
   readonly namespaces?: ReadonlyMap<string, ToolNamespace>
 }
 
@@ -88,7 +88,7 @@ const description = [
 
 export const create = (
   inventory: Inventory,
-  executeTool: (name: string, tool: Info.Form, input: unknown, context: ToolContext) => Effect.Effect<Result, Error>,
+  executeTool: (name: string, tool: Info, input: unknown, context: ToolContext) => Effect.Effect<Result, Error>,
   permission: Permission.Interface,
   /** With `full_codemode`, the session's Location, which turns on the experimental `path` global. */
   location?: Location.Interface,
@@ -198,7 +198,7 @@ export const create = (
           metadata,
         }
       }).pipe(Effect.scoped),
-  } satisfies Info.Form
+  } satisfies Info
 }
 
 // Rows appear in start order; the same call object arrives at both hooks, so a call finds its row again.
@@ -309,7 +309,7 @@ export const check = (
   code: string,
   bindings: Readonly<Record<string, CodeMode.DataValue>>,
   limits: CodeMode.ExecutionLimits,
-  executeTool: (name: string, tool: Info.Form, input: unknown) => Effect.Effect<Result, Error>,
+  executeTool: (name: string, tool: Info, input: unknown) => Effect.Effect<Result, Error>,
 ) =>
   CodeMode.make({
     tools: inventoryTools(inventory),
